@@ -4,8 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon -r dotenv/config  socketServer.js",
+    "start": "node -r dotenv/config socketServer.js",
+    "dev": "nodemon -r dotenv/config  socketServer.js",
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "engines": {
+    "node": "15.10.0"
   },
   "author": "",
   "license": "ISC",
