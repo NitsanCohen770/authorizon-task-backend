@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node -r dotenv/config socketServer.js",
+    "start": "node socketServer.js",
     "dev": "nodemon -r dotenv/config  socketServer.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
