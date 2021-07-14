@@ -31,7 +31,8 @@ const IS_ADMIN_USER = 'isAdminUser';
 // socket.emit(
 //   IS_ADMIN_USER,
 //   adminList.includes(socket.handshake.query.email));
-io.use(async (socket, next) => {
+
+io.use((socket, next) => {
   const userEmail = socket.handshake.query.userEmail;
   const userSessionId = socket.id;
   Admins.find().then(adminList => {
@@ -123,13 +124,20 @@ io.on('connection', socket => {
     console.log('begin');
     const userEmail = socket.handshake.query.userEmail;
     Users.findOneAndDelete({ email: userEmail }).then(userData => {
-      console.log(userData);
       if (userData?.invited) {
         const adminUser = new Admins({
           email: userData.email,
-          socketSessionId: userData.socketSessionId,
+          socketSessionId: socket.id,
         });
-        adminUser.save();
+        adminUser.save().then(res => {
+          socket.emit(NEW_CHAT_MESSAGE_EVENT, [
+            {
+              body: 'Congrats! You Are now an admin user! Please refresh the page.',
+              senderId: 'System',
+              timeSent: new Date(),
+            },
+          ]);
+        });
       }
     });
   });
@@ -140,11 +148,13 @@ io.on('connection', socket => {
         socket.disconnect(true);
       }
     });
+
     const newFilter = new Filters({ ...filterQuery });
     newFilter.save().then(res =>
       Filters.find().then(allFilters => {
         const filters = allFilters.map(filter => filter.keywords);
         const regex = filters.join('|');
+
         Messages.find({
           body: { $not: { $regex: regex, $options: 'i' } },
         }).then(filteredMessages => {
