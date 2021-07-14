@@ -83,9 +83,9 @@ io.on('connection', socket => {
         }
         const filters = allFilters.map(filter => filter.keywords);
         const regexFilters = filters.map(filter => new RegExp(filter));
-        const regex = filters.join('|');
+        const mongoRegex = filters.join('|');
         Messages.find({
-          body: { $not: { $regex: regex, $options: 'i' } },
+          body: { $not: { $regex: mongoRegex, $options: 'i' } },
         }).then(filteredMessages => {
           io.to('Users').emit(NEW_CHAT_MESSAGE_EVENT, filteredMessages);
           if (regexFilters.some(filter => filter.test(data.body))) {
