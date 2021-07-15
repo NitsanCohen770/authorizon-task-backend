@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 const usersSchema = new Schema({
   email: { type: String, require: true },
   socketSessionId: { type: String, required: true },
-  invited: { type: Boolean, required: false },
+  isInvited: { type: Boolean, required: false },
 });
 
 module.exports = mongoose.model('users', usersSchema);
