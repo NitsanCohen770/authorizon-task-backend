@@ -25,12 +25,9 @@ const IS_ADMIN_USER = 'isAdminUser';
 // io.use(
 //   socketioJwt.authorize({
 //     secret: process.env.AUTH0_CLIENT_SECRET,
-//     handshake: false,
+//     handshake: true,
 //   })
 // );
-// socket.emit(
-//   IS_ADMIN_USER,
-//   adminList.includes(socket.handshake.query.email));
 
 io.use((socket, next) => {
   const userEmail = socket.handshake.query.userEmail;
@@ -70,20 +67,21 @@ io.use((socket, next) => {
 
 io.on('connection', socket => {
   console.log('connected!');
-  console.log(socket.id);
 
   socket.on(NEW_CHAT_MESSAGE_EVENT, data => {
     const newMessage = new Messages({ ...data });
     newMessage.save().then(res =>
       Filters.find().then(allFilters => {
         if (allFilters.length === 0) {
-          Messages.find().then(allMessages =>
+          return Messages.find().then(allMessages =>
             io.emit(NEW_CHAT_MESSAGE_EVENT, allMessages)
           );
         }
+
         const filters = allFilters.map(filter => filter.keywords);
         const regexFilters = filters.map(filter => new RegExp(filter));
         const mongoRegex = filters.join('|');
+
         Messages.find({
           body: { $not: { $regex: mongoRegex, $options: 'i' } },
         }).then(filteredMessages => {
@@ -108,7 +106,7 @@ io.on('connection', socket => {
   socket.on(ADMIN_INVITATION_EVENT, userEmail => {
     Users.findOneAndUpdate(
       { email: userEmail },
-      { $set: { invited: true } }
+      { $set: { isInvited: true } }
     ).then(userData => {
       socket.to(userData.socketSessionId).emit(NEW_CHAT_MESSAGE_EVENT, [
         {
@@ -121,10 +119,9 @@ io.on('connection', socket => {
   });
 
   socket.on(ADMIN_INVITATION_ACCEPTED, () => {
-    console.log('begin');
     const userEmail = socket.handshake.query.userEmail;
     Users.findOneAndDelete({ email: userEmail }).then(userData => {
-      if (userData?.invited) {
+      if (userData?.isInvited) {
         const adminUser = new Admins({
           email: userData.email,
           socketSessionId: socket.id,
@@ -145,7 +142,7 @@ io.on('connection', socket => {
   socket.on(NEW_FILTER_QUERY_EVENT, filterQuery => {
     Admins.findOne({ socketSessionId: socket.id }).then(adminExists => {
       if (!adminExists) {
-        socket.disconnect(true);
+        return socket.disconnect(true);
       }
     });
 
