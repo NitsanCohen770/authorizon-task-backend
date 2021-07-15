@@ -33,8 +33,8 @@ io.use((socket, next) => {
   const userEmail = socket.handshake.query.userEmail;
   const userSessionId = socket.id;
   Admins.find().then(adminList => {
-    const adminsEmail = adminList.map(adminData => adminData.email);
-    if (adminsEmail.includes(userEmail)) {
+    const adminsEmailList = adminList.map(adminData => adminData.email);
+    if (adminsEmailList.includes(userEmail)) {
       Admins.updateOne(
         { email: userEmail },
         { $set: { socketSessionId: userSessionId } },
